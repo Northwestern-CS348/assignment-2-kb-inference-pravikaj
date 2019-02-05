@@ -128,7 +128,74 @@ class KnowledgeBase(object):
         printv("Retracting {!r}", 0, verbose, [fact_or_rule])
         ####################################################
         # Student code goes here
+        if isinstance(fact_or_rule, Fact):
+            """RETRACTS THE FACT"""
+            fact_or_rule.asserted = False
+
+            """Checks if we should remove the fact or not based on its supports"""
+            self.kb_remove(fact_or_rule)
+
+        if isinstance(fact_or_rule, Rule):
+            return False
+
         
+    def kb_remove(self, f_or_r):
+        # If fact is not supported (does not matter asserted or not) it is removed
+        # If rule is not supported AND not asserted then remove
+        if len(f_or_r.supported_by) == 0:
+            if isinstance(f_or_r, Fact) or (isinstance(f_or_r, Rule) and f_or_r.asserted is False):
+                if isinstance(f_or_r, Fact):
+                    self.facts.remove(f_or_r)
+                    for sf in f_or_r.supports_facts:
+                        for sb in sf.supported_by:  # remove support
+                            if f_or_r in sb:
+                                sf.supported_by.remove(sb)
+                        self.kb_remove(sf)
+
+                if isinstance(f_or_r, Rule):
+                    self.rules.remove(f_or_r)
+                    for sr in f_or_r.supports_rules:
+                        for sb in sr.supported_by:
+                            if f_or_r in sb:
+                                sr.supported_by.remove(sb)
+                        self.kb_remove(sr)
+
+
+
+
+
+        #
+        # remove_f_r = fact_or_rule
+        # self.facts.remove(fact_or_rule)
+        #
+        # if remove_f_r.name == 'fact':
+        #     for i, e in remove_f_r.supports_facts:
+        #         # REMOVES ALL SUPPORT FROM PREVIOUSLY SUPPORTED FACTS
+        #         if e.supported_by[i, 0] == remove_f_r:
+        #             e.supported_by.remove(i)
+        #
+        #         #Now loop through previosuly supported facts to check if they should be retracted or removed
+        #         if e.asserted is True & len(e.supported_by) > 0:
+        #             self.kb_retract(e)
+        #
+        #         if len(e.supported_by) == 0:
+        #             self.kb_remove(e)
+        #
+        #     for j, e in remove_f_r.supports_rules:
+        #         #REMOVES ALL SUPPORT FROM PREVIOUSLY SUPPORTED RULES
+        #         if e.supported_by[i, 0] == remove_f_r:
+        #             e.supported_by.remove(j)
+        #
+        #         # Now loop through previosuly supported facts to check if they should be removed
+        #         if e.asserted is False & len(e.supported_by) == 0:
+        #             self.kb_remove(e)
+        #
+        # if remove_f_r.name == 'rule':
+        #     if remove_f_r.asserted is False & len(remove_f_r.supported_by)==0:
+        #         self.kb_remove(e)
+
+
+
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
@@ -146,3 +213,22 @@ class InferenceEngine(object):
             [fact.statement, rule.lhs, rule.rhs])
         ####################################################
         # Student code goes here
+        new_lhs = []
+        bindings = match(fact.statement, rule.lhs[0])
+        if bindings:
+            if len(rule.lhs) > 1:
+                for i in rule.lhs[1:]:
+                    new_lhs.append(instantiate(i, bindings))
+                new_rhs = instantiate(rule.rhs, bindings)
+                new_rule = Rule([new_lhs, new_rhs], [[fact, rule]])
+                fact.supports_rules.append(new_rule)
+                rule.supports_rules.append(new_rule)
+                kb.kb_add(new_rule)
+
+            if len(rule.lhs) == 1:
+                new_rhs = instantiate(rule.rhs, bindings)
+                new_fact = Fact(new_rhs, [[fact, rule]])
+                fact.supports_rules.append(new_fact)
+                rule.supports_rules.append(new_fact)
+                kb.kb_add(new_fact)
+
