@@ -181,24 +181,29 @@ class InferenceEngine(object):
             [fact.statement, rule.lhs, rule.rhs])
         ####################################################
         # Student code goes here
-        new_lhs = []
         bindings = match(rule.lhs[0], fact.statement)
         if bindings:
             if len(rule.lhs) == 1:  # infering a fact
                 new_rhs = instantiate(rule.rhs, bindings)
                 new_fact = Fact(new_rhs, [[fact, rule]])
+
                 kb.kb_add(new_fact)
+
                 fact.supports_facts.append(kb._get_fact(new_fact))
                 rule.supports_facts.append(kb._get_fact(new_fact))
 
-            if len(rule.lhs) > 1:
+            else:
+                new_lhs = []
                 for i in rule.lhs[1:]:
                     new_lhs.append(instantiate(i, bindings))
+
                 new_rhs = instantiate(rule.rhs, bindings)
                 new_rule = Rule([new_lhs, new_rhs], [[fact, rule]])
+
                 kb.kb_add(new_rule)
-                fact.supports_rules.append(kb._get_fact(new_rule))
-                rule.supports_rules.append(kb._get_fact(new_rule))
+
+                fact.supports_rules.append(kb._get_rule(new_rule))
+                rule.supports_rules.append(kb._get_rule(new_rule))
 
 
 
