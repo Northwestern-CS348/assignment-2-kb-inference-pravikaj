@@ -134,8 +134,8 @@ class KnowledgeBase(object):
             fact.asserted = False
 
             """Checks if we should remove the fact or not based on its supports"""
-            if len(fact_or_rule.supported_by) == 0:
-                self.kb_remove(fact_or_rule)
+            if len(fact.supported_by) == 0:
+                self.kb_remove(fact)
 
 
         
@@ -192,7 +192,7 @@ class InferenceEngine(object):
                 fact.supports_facts.append(kb._get_fact(new_fact))
                 rule.supports_facts.append(kb._get_fact(new_fact))
 
-            else:
+            elif len(rule.lhs) > 1:
                 new_lhs = []
                 for i in rule.lhs[1:]:
                     new_lhs.append(instantiate(i, bindings))
